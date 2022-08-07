@@ -20,7 +20,7 @@ def load_dataset(ticker: str, length: int):
     stock = yf.Ticker(ticker)
 
     # get historical market data
-    hist = stock.history(period="10y", interval='1d')
+    hist = stock.history(period="2y", interval='1h')
 
     vals = hist.Close.values
     dates = hist.index.values

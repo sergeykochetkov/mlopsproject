@@ -9,6 +9,7 @@ from model import TransformerModel
 def validate(model, val_dataloader, device):
     model.eval()
     profit = []
+    eps = 1e-6
     for x, y in val_dataloader:
         x = x.to(device)
         y = y.to(device)
@@ -16,31 +17,31 @@ def validate(model, val_dataloader, device):
         pred = model(x)
         profit.extend((y * pred).detach().cpu().numpy())
 
-    return np.mean(profit)
+    return np.mean(profit) / (np.std(profit) + eps)
 
 
 def kelly_loss(output, target):
     profit = output * target
     m = torch.mean(profit)
 
-    loss = m - 0.5 * torch.std(profit) ** 2
+    loss = - (m - 0.5 * torch.std(profit) ** 2)
     return loss
 
 
 if __name__ == "__main__":
     device = 'cuda:1'
-    batch_size = 9
+    batch_size = 100
     grad_norm = 0.5
     epochs = 100
     lr = 0.001
-    length = 75
+    length = 5
     emsize = 200  # embedding dimension
     d_hid = 200  # dimension of the feedforward network model in nn.TransformerEncoder
     nlayers = 2  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
     nhead = 2  # number of heads in nn.MultiheadAttention
     dropout = 0.2  # dropout probability
 
-    d, x, y = load_dataset('MSFT', length)
+    d, x, y = load_dataset('AAPL', length)
     val_idx = int(0.8 * len(x))
 
     train_dataset = StockDataset(d[:val_idx], x[:val_idx], y[:val_idx])
@@ -50,7 +51,7 @@ if __name__ == "__main__":
 
     model = TransformerModel(length, emsize, nhead, d_hid, nlayers, dropout).to(device)
 
-    criterion = kelly_loss #nn.L1Loss()
+    criterion = kelly_loss
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 
     for epoch in range(epochs):
