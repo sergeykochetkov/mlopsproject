@@ -69,4 +69,4 @@ class TransformerModel(nn.Module):
         output = output.transpose(0, 1)  # [batch_size, seq_len]
         output = output.flatten(-2, -1)
         output = self.decoder(output)
-        return torch.squeeze(output, dim=-1)
+        return torch.squeeze(torch.sigmoid(output)*2-1, dim=-1)

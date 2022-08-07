@@ -4,29 +4,8 @@ import torch.nn as nn
 from torch.utils.data.dataloader import DataLoader
 from data import StockDataset, load_dataset
 from model import TransformerModel
-
-
-def validate(model, val_dataloader, device):
-    model.eval()
-    profit = []
-    eps = 1e-6
-    for x, y in val_dataloader:
-        x = x.to(device)
-        y = y.to(device)
-
-        pred = model(x)
-        profit.extend((y * pred).detach().cpu().numpy())
-
-    return np.mean(profit) / (np.std(profit) + eps)
-
-
-def kelly_loss(output, target):
-    profit = output * target
-    m = torch.mean(profit)
-
-    loss = - (m - 0.5 * torch.std(profit) ** 2)
-    return loss
-
+from loss import kelly_loss
+from validate import validate
 
 if __name__ == "__main__":
     device = 'cuda:1'
