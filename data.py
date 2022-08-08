@@ -18,11 +18,11 @@ class StockDataset(Dataset):
         return self._x[item], self._y[item]
 
 
-def load_dataset(ticker: str, length: int, shuffle_y_for_unittest: bool = False):
+def load_dataset(ticker: str, length: int, interval: str, period: str, shuffle_y_for_unittest: bool = False):
     stock = yf.Ticker(ticker)
 
     # get historical market data
-    hist = stock.history(period="2y", interval='1h')
+    hist = stock.history(period=period, interval=interval)
 
     vals = hist.Close.values
     dates = hist.index.values

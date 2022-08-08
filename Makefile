@@ -13,3 +13,6 @@ setup:
 
 test:
 	bash -c "${CA} && python -m unittest -f"
+
+deploy_flow:
+	prefect deployment create deploy_main.py

@@ -25,8 +25,10 @@ class TestModel(unittest.TestCase):
         self.nlayers = 6  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
         self.nhead = 2  # number of heads in nn.MultiheadAttention
         self.dropout = 0.2  # dropout probability
+        self.period = '2y'
+        self.interval = '1d'
 
-        d, x, y = load_dataset('AAPL', self.length)
+        d, x, y = load_dataset('AAPL', self.length, self.interval, self.period)
 
         train_dataset = StockDataset(d, x, y)
         self.train_loader = torch.utils.data.dataloader.DataLoader(train_dataset, batch_size=self.batch_size,
@@ -45,6 +47,7 @@ class TestModel(unittest.TestCase):
     def _train_and_eval(self, train_loader, val_loader):
         loss_vs_epoch = []
         profit_vs_epoch = []
+        val_loss_vs_epoch = []
         optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr)
         for epoch in range(self.epochs):
             avg_loss = 0
@@ -63,24 +66,24 @@ class TestModel(unittest.TestCase):
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.grad_norm)
                 optimizer.step()
             loss_vs_epoch.append(avg_loss)
-            profit = validate(self.model, val_loader, self.device)
+            profit, val_loss = validate(self.model, val_loader, self.criterion, self.device)
+            val_loss_vs_epoch.append(val_loss)
             profit_vs_epoch.append(profit)
-        return loss_vs_epoch, profit_vs_epoch
+        return loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch
 
     def test_overfit(self):
 
         self.model = self._build_fresh_model()
-        loss_vs_epoch, profit_vs_epoch = self._train_and_eval(self.train_loader, self.train_loader)
+        loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch = self._train_and_eval(self.train_loader, self.train_loader)
 
-        print(f'test overfit profit={profit_vs_epoch}')
         self.assertGreater(loss_vs_epoch[0], loss_vs_epoch[-1])
-        self.assertLess(profit_vs_epoch[0], profit_vs_epoch[-1])
+        self.assertGreater(val_loss_vs_epoch[0], val_loss_vs_epoch[-1])
 
     def test_no_leak(self):
 
         random.seed(0)
 
-        d, x, y = load_dataset('MSFT', self.length, shuffle_y_for_unittest=True)
+        d, x, y = load_dataset('MSFT', self.length, self.interval, self.period, shuffle_y_for_unittest=True)
 
         med = len(x) // 2
 
@@ -92,10 +95,8 @@ class TestModel(unittest.TestCase):
         val_loader = torch.utils.data.dataloader.DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False,
                                                             num_workers=0)
         self.model = self._build_fresh_model()
-        loss_vs_epoch, profit_vs_epoch = self._train_and_eval(train_loader, val_loader)
+        loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch = self._train_and_eval(train_loader, val_loader)
+        y = torch.from_numpy(y)
+        base_loss = self.criterion(y, torch.zeros_like(y)).item()
 
-        print(profit_vs_epoch)
-        print(f' mean={np.mean(profit_vs_epoch)} std={np.std(profit_vs_epoch)}')
-
-        self.assertLess(np.abs(profit_vs_epoch[0] - profit_vs_epoch[-1]),
-                        2.5 * np.std(profit_vs_epoch) * np.sqrt(len(profit_vs_epoch)))
+        self.assertLess(base_loss, val_loss_vs_epoch[-1])

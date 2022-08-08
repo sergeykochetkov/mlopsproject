@@ -6,7 +6,7 @@ class TestData(unittest.TestCase):
     def setUp(self) -> None:
         self.ticker = 'MSFT'
         self.length = 10
-        self._d, self._x, self._y = load_dataset(self.ticker, self.length)
+        self._d, self._x, self._y = load_dataset(self.ticker, self.length, period='1y', interval='1h')
 
     def test_dimensions(self):
         self.assertEqual(len(self._d), len(self._x))

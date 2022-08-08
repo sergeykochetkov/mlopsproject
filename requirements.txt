@@ -1,3 +1,5 @@
 yfinance
 tqdm
 pandas
+mlflow
+prefect==2.0b5
