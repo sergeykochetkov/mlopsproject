@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import torch
+from torch import nn
 import unittest
 from torch.utils.data.dataloader import DataLoader
 from data import StockDataset, load_dataset
@@ -17,11 +18,11 @@ class TestModel(unittest.TestCase):
         self.batch_size = 5
 
         self.epochs = 10
-        lr = 0.001
+        lr = 0.01
         self.length = 5
-        self.emsize = 32  # embedding dimension
-        self.d_hid = 32  # dimension of the feedforward network model in nn.TransformerEncoder
-        self.nlayers = 2  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
+        self.emsize = 128  # embedding dimension
+        self.d_hid = 128  # dimension of the feedforward network model in nn.TransformerEncoder
+        self.nlayers = 6  # number of nn.TransformerEncoderLayer in nn.TransformerEncoder
         self.nhead = 2  # number of heads in nn.MultiheadAttention
         self.dropout = 0.2  # dropout probability
 
@@ -34,7 +35,7 @@ class TestModel(unittest.TestCase):
 
         self.model = self._build_fresh_model()
 
-        self.criterion = kelly_loss
+        self.criterion = nn.L1Loss()
         self.lr = lr
 
     def _build_fresh_model(self):

@@ -12,7 +12,7 @@ if __name__ == "__main__":
     batch_size = 100
     grad_norm = 0.5
     epochs = 100
-    lr = 0.001
+    lr = 1e-2
     length = 5
     emsize = 200  # embedding dimension
     d_hid = 200  # dimension of the feedforward network model in nn.TransformerEncoder
@@ -30,23 +30,26 @@ if __name__ == "__main__":
 
     model = TransformerModel(length, emsize, nhead, d_hid, nlayers, dropout).to(device)
 
-    criterion = kelly_loss
+    criterion = nn.L1Loss() #kelly_loss
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 
     for epoch in range(epochs):
         model.train()
+        avg_loss = []
         for x, y in train_loader:
+            optimizer.zero_grad()
+
             x = x.to(device)
             y = y.to(device)
 
             pred = model(x)
 
             loss = criterion(pred, y)
+            avg_loss.append(loss.item())
 
-            optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_norm)
             optimizer.step()
             dbg = 1
         profit = validate(model, val_loader, device)
-        print(f' epoch={epoch} profit={profit}')
+        print(f' epoch={epoch} profit={profit} avg_loss={np.mean(avg_loss)}')

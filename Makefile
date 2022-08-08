@@ -8,5 +8,8 @@ setup:
 
 	bash -c "${CA} && conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch -y && pip install -r requirements.txt"
 
+	cp pre_commit .git/hooks
+	chmod +x .git/hooks/pre_commit
+
 test:
 	bash -c "${CA} && python -m unittest -f"
