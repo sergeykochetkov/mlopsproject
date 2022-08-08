@@ -1,0 +1,39 @@
+###
+### A complete description of a Prefect Deployment for flow 'main'
+###
+name: main
+description: null
+version: bd69a210ba25b2885b69a4d4d60fc821
+tags:
+- dev
+parameters: {}
+schedule:
+  interval: 600
+  timezone: America/Chicago
+infrastructure:
+  type: process
+  env: {}
+  labels: {}
+  name: null
+  command:
+  - python
+  - -m
+  - prefect.engine
+  stream_output: true
+###
+### DO NOT EDIT BELOW THIS LINE
+###
+flow_name: main
+manifest_path: main-manifest.json
+storage:
+  basepath: /home/skochetkov/Documents/MLOpsProject
+  _is_anonymous: true
+  _block_document_name: anonymous-890611c7-69fb-4a72-be0e-3e4cc6197db9
+  _block_document_id: 29dd1e31-97fe-4f6c-b06e-4b1305cb3f12
+  _block_type_slug: local-file-system
+parameter_openapi_schema:
+  title: Parameters
+  type: object
+  properties: {}
+  required: null
+  definitions: null

@@ -14,5 +14,6 @@ setup:
 test:
 	bash -c "${CA} && python -m unittest -f"
 
-deploy_flow:
-	prefect deployment create main.py
+prefect_deploy_main:
+	prefect deployment apply main-deployment.yaml
+	prefect deployment run main/main
