@@ -1,5 +1,5 @@
 #!/bin/bash
 
-pylint --recursive=y .
+pylint --recursive=y . &&
 
 make test
