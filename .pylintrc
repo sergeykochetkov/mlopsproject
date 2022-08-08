@@ -1,0 +1,2 @@
+[MESSAGES CONTROL]
+disable=no-member, not-callable, eval-used, too-many-locals,too-many-instance-attributes,too-many-arguments

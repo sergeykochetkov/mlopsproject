@@ -1,24 +1,28 @@
+'''
+unittests for model
+'''
+import unittest
 import random
-
-import numpy as np
 import torch
 from torch import nn
-import unittest
-from torch.utils.data.dataloader import DataLoader
 from data import StockDataset, load_dataset
 from model import TransformerModel
-from loss import kelly_loss
 from validate import validate
 
 
 class TestModel(unittest.TestCase):
+    '''
+    tests model basic functionality, ability to learn
+    '''
+
     def setUp(self) -> None:
         self.device = 'cuda:1'
         self.grad_norm = 0.5
         self.batch_size = 5
 
         self.epochs = 10
-        lr = 0.01
+        self.criterion = nn.L1Loss()
+        self.learning_rate = 0.01
         self.length = 5
         self.emsize = 128  # embedding dimension
         self.d_hid = 128  # dimension of the feedforward network model in nn.TransformerEncoder
@@ -28,37 +32,37 @@ class TestModel(unittest.TestCase):
         self.period = '2y'
         self.interval = '1d'
 
-        d, x, y = load_dataset('AAPL', self.length, self.interval, self.period)
+        dates, features_x, target_y = \
+            load_dataset('AAPL', self.length, self.interval, self.period)
 
-        train_dataset = StockDataset(d, x, y)
-        self.train_loader = torch.utils.data.dataloader.DataLoader(train_dataset, batch_size=self.batch_size,
+        train_dataset = StockDataset(dates, features_x, target_y)
+        self.train_loader = torch.utils.data.dataloader.DataLoader(train_dataset,
+                                                                   batch_size=self.batch_size,
                                                                    shuffle=True,
                                                                    num_workers=0)
 
         self.model = self._build_fresh_model()
 
-        self.criterion = nn.L1Loss()
-        self.lr = lr
-
     def _build_fresh_model(self):
-        return TransformerModel(self.length, self.emsize, self.nhead, self.d_hid, self.nlayers, self.dropout).to(
+        return TransformerModel(self.length, self.emsize, self.nhead,
+                                self.d_hid, self.nlayers, self.dropout).to(
             self.device)
 
     def _train_and_eval(self, train_loader, val_loader):
         loss_vs_epoch = []
         profit_vs_epoch = []
         val_loss_vs_epoch = []
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.lr)
-        for epoch in range(self.epochs):
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate)
+        for _ in range(self.epochs):
             avg_loss = 0
             self.model.train()
-            for x, y in train_loader:
-                x = x.to(self.device)
-                y = y.to(self.device)
+            for features_x, targets_y in train_loader:
+                features_x = features_x.to(self.device)
+                targets_y = targets_y.to(self.device)
 
-                pred = self.model(x)
+                pred = self.model(features_x)
 
-                loss = self.criterion(pred, y)
+                loss = self.criterion(pred, targets_y)
                 avg_loss += loss.item()
 
                 optimizer.zero_grad()
@@ -72,31 +76,43 @@ class TestModel(unittest.TestCase):
         return loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch
 
     def test_overfit(self):
+        '''
+        tests if we can reduce loss in training data
+        '''
 
         self.model = self._build_fresh_model()
-        loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch = self._train_and_eval(self.train_loader, self.train_loader)
+        loss_vs_epoch, _, _ = self._train_and_eval(self.train_loader, self.train_loader)
 
         self.assertGreater(loss_vs_epoch[0], loss_vs_epoch[-1])
-        self.assertGreater(val_loss_vs_epoch[0], val_loss_vs_epoch[1])
 
     def test_no_leak(self):
+        '''
+        tests of there is leak between train and val dataset parts
+        '''
 
         random.seed(0)
 
-        d, x, y = load_dataset('MSFT', self.length, self.interval, self.period, shuffle_y_for_unittest=True)
+        dates, features_x, target_y = load_dataset('MSFT', self.length,
+                                                   self.interval,
+                                                   self.period,
+                                                   shuffle_y_for_unittest=True)
 
-        med = len(x) // 2
+        med = len(features_x) // 2
 
-        train_dataset = StockDataset(d[:med], x[:med], y[:med])
-        train_loader = torch.utils.data.dataloader.DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True,
+        train_dataset = StockDataset(dates[:med], features_x[:med], target_y[:med])
+        train_loader = torch.utils.data.dataloader.DataLoader(train_dataset,
+                                                              batch_size=self.batch_size,
+                                                              shuffle=True,
                                                               num_workers=0)
 
-        val_dataset = StockDataset(d[med:], x[med:], y[med:])
-        val_loader = torch.utils.data.dataloader.DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False,
+        val_dataset = StockDataset(dates[med:], features_x[med:], target_y[med:])
+        val_loader = torch.utils.data.dataloader.DataLoader(val_dataset,
+                                                            batch_size=self.batch_size,
+                                                            shuffle=False,
                                                             num_workers=0)
         self.model = self._build_fresh_model()
-        loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch = self._train_and_eval(train_loader, val_loader)
-        y = torch.from_numpy(y)
-        base_loss = self.criterion(y, torch.zeros_like(y)).item()
+        _, _, val_loss_vs_epoch = self._train_and_eval(train_loader, val_loader)
+        target_y = torch.from_numpy(target_y)
+        base_loss = self.criterion(target_y, torch.zeros_like(target_y)).item()
 
         self.assertLess(base_loss, val_loss_vs_epoch[-1])

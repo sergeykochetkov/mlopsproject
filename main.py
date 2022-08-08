@@ -1,23 +1,33 @@
+'''
+train model and validate it, mlflow experiment tracking
+'''
+from urllib.parse import urlparse
 import torch
 import numpy as np
-import torch.nn as nn
 from torch.utils.data.dataloader import DataLoader
 import mlflow
-from urllib.parse import urlparse
+from prefect.task_runners import SequentialTaskRunner
+from prefect import flow, task
 from data import StockDataset, load_dataset
 from model import TransformerModel
 from loss import kelly_loss
 from validate import validate
-from prefect import flow, task
-from prefect.task_runners import SequentialTaskRunner
 
 
 @task()
 def create_loaders(ticker, batch_size, length, period, interval):
-    d, x, y = load_dataset(ticker, length, period, interval)
-    val_idx = int(0.8 * len(x))
-    train_dataset = StockDataset(d[:val_idx], x[:val_idx], y[:val_idx])
-    val_dataset = StockDataset(d[val_idx:], x[val_idx:], y[val_idx:])
+    '''
+    :param ticker: stock ticker
+    :param batch_size: batch_size for train/val loader
+    :param length: length of history used for each prediction
+    :param period: historical period used for data creation 1y, 2y,
+    :param interval: time interval for return calculation 1h, 1d, 1w
+    :return: torch data loaders for training/validation stock return prediction model
+    '''
+    dates, features_x, targets_y = load_dataset(ticker, length, period, interval)
+    val_idx = int(0.8 * len(features_x))
+    train_dataset = StockDataset(dates[:val_idx], features_x[:val_idx], targets_y[:val_idx])
+    val_dataset = StockDataset(dates[val_idx:], features_x[val_idx:], targets_y[val_idx:])
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     return train_loader, val_loader
@@ -25,17 +35,24 @@ def create_loaders(ticker, batch_size, length, period, interval):
 
 @task()
 def train_and_validate(model, train_loader, val_loader, criterion, optimizer, device, grad_norm):
+    '''
+    single epoch training and validation
+    returns:
+        profit - validation profit
+        val_loss - criterion on validation
+        avg_loss - criterion on train
+    '''
     model.train()
     avg_loss = []
-    for x, y in train_loader:
+    for features_x, targets_y in train_loader:
         optimizer.zero_grad()
 
-        x = x.to(device)
-        y = y.to(device)
+        features_x = features_x.to(device)
+        targets_y = targets_y.to(device)
 
-        pred = model(x)
+        pred = model(features_x)
 
-        loss = criterion(pred, y)
+        loss = criterion(pred, targets_y)
         avg_loss.append(loss.item())
 
         loss.backward()
@@ -48,6 +65,9 @@ def train_and_validate(model, train_loader, val_loader, criterion, optimizer, de
 
 @task()
 def register_model(model):
+    '''
+    place trained model in ml flow registry, to put it in production later
+    '''
     tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
 
     # Model registry does not work with file store
@@ -64,11 +84,14 @@ def register_model(model):
 
 @flow(task_runner=SequentialTaskRunner())
 def main():
+    '''
+    train model and register it in mlflow registry
+    '''
     device = 'cuda:1'
     batch_size = 100
     grad_norm = 0.5
     epochs = 100
-    lr = 1e-2
+    learning_rate = 1e-2
     length = 15
     emsize = 200  # embedding dimension
     d_hid = 200  # dimension of the feedforward network model in nn.TransformerEncoder
@@ -82,18 +105,23 @@ def main():
 
     with mlflow.start_run():
 
-        for p in ['ticker', 'batch_size', 'grad_norm', 'epochs', 'lr', 'length', 'emsize', 'd_hid', 'nlayers', 'nhead',
-                  'dropout', 'criterion', 'period', 'interval']:
-            mlflow.log_param(p, eval(p))
+        for param_name in ['ticker', 'batch_size', 'grad_norm', 'epochs', 'learning_rate',
+                           'length', 'emsize', 'd_hid', 'nlayers',
+                           'nhead',
+                           'dropout', 'criterion', 'period', 'interval']:
+            mlflow.log_param(param_name, eval(param_name))
 
-        train_loader, val_loader = create_loaders(ticker, batch_size, length, period, interval)
+        train_loader, val_loader = create_loaders(ticker, batch_size,
+                                                  length, period, interval)
 
-        model = TransformerModel(length, emsize, nhead, d_hid, nlayers, dropout).to(device)
+        model = TransformerModel(length, emsize, nhead, d_hid,
+                                 nlayers, dropout).to(device)
 
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
         for epoch in range(epochs):
-            profit, val_loss, avg_loss = train_and_validate(model, train_loader, val_loader, criterion, optimizer,
+            profit, val_loss, avg_loss = train_and_validate(model, train_loader,
+                                                            val_loader, criterion, optimizer,
                                                             device, grad_norm)
             print(f' epoch={epoch} profit={profit} avg_loss={avg_loss}')
 

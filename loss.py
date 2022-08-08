@@ -1,9 +1,15 @@
+'''
+trading specific losses
+'''
 import torch
 
 
 def kelly_loss(output, target):
+    '''
+    loss accounting for risks
+    '''
     profit = output * target
-    m = torch.mean(profit)
+    mean_profit = torch.mean(profit)
 
-    loss = - (m - 0.5 * torch.std(profit) ** 2)
+    loss = - (mean_profit - 0.5 * torch.std(profit) ** 2)
     return loss
