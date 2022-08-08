@@ -77,7 +77,7 @@ class TestModel(unittest.TestCase):
         loss_vs_epoch, profit_vs_epoch, val_loss_vs_epoch = self._train_and_eval(self.train_loader, self.train_loader)
 
         self.assertGreater(loss_vs_epoch[0], loss_vs_epoch[-1])
-        self.assertGreater(val_loss_vs_epoch[0], val_loss_vs_epoch[-1])
+        self.assertGreater(val_loss_vs_epoch[0], val_loss_vs_epoch[1])
 
     def test_no_leak(self):
 
