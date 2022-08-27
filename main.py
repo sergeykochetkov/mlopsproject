@@ -24,7 +24,7 @@ def create_loaders(ticker, batch_size, length, period, interval):
     :param interval: time interval for return calculation 1h, 1d, 1w
     :return: torch data loaders for training/validation stock return prediction model
     '''
-    dates, features_x, targets_y = load_dataset(ticker, length, period, interval)
+    dates, features_x, targets_y = load_dataset(ticker, length, interval, period)
     val_idx = int(0.8 * len(features_x))
     train_dataset = StockDataset(dates[:val_idx], features_x[:val_idx], targets_y[:val_idx])
     val_dataset = StockDataset(dates[val_idx:], features_x[val_idx:], targets_y[val_idx:])
@@ -69,7 +69,7 @@ def register_model(model):
     place trained model in ml flow registry, to put it in production later
     '''
     tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
-
+    model.cpu()
     # Model registry does not work with file store
     if tracking_url_type_store != "file":
 
@@ -111,11 +111,10 @@ def main():
                            'dropout', 'criterion', 'period', 'interval']:
             mlflow.log_param(param_name, eval(param_name))
 
-        train_loader, val_loader = create_loaders(ticker, batch_size,
-                                                  length, period, interval)
+        train_loader, val_loader = create_loaders(ticker, batch_size=batch_size,
+                                                  length=length, period=period, interval=interval)
 
-        model = TransformerModel(length, emsize, nhead, d_hid,
-                                 nlayers, dropout).to(device)
+        model = TransformerModel(length, emsize, nhead, d_hid, nlayers, dropout).to(device)
 
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 

@@ -11,6 +11,7 @@ class PositionalEncoding(nn.Module):
     '''
     encoding time of lag feature
     '''
+
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
@@ -35,9 +36,13 @@ class TransformerModel(nn.Module):
     '''
     transformer for timeseries prediction
     '''
+
     def __init__(self, length: int, d_model: int, nhead: int, d_hid: int,
                  nlayers: int, dropout: float = 0.5):
         super().__init__()
+        self._params = {'length': length, 'd_model': d_model, 'nhead': nhead, 'd_hid': d_hid,
+                        'nlayers': nlayers, 'dropout': dropout}
+
         self.model_type = 'Transformer'
         self.pos_encoder = PositionalEncoding(d_model, dropout)
         encoder_layers = TransformerEncoderLayer(d_model, nhead, d_hid, dropout)
@@ -45,8 +50,8 @@ class TransformerModel(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(1, d_model), nn.ReLU(), nn.Linear(d_model, d_model),
             nn.ReLU(), nn.Linear(d_model, d_model))
-        self.d_model = d_model
-        self.length = length
+        self.d_model = self._params['d_model']
+        self.length = self._params['length']
         self.decoder = nn.Linear(d_model * length, 1)
 
         self.init_weights()
@@ -56,7 +61,7 @@ class TransformerModel(nn.Module):
         custom weight initialization
         '''
         initrange = 0.1
-        #self.encoder.weight.data.uniform_(-initrange, initrange)
+        # self.encoder.weight.data.uniform_(-initrange, initrange)
         self.decoder.bias.data.zero_()
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
@@ -77,4 +82,4 @@ class TransformerModel(nn.Module):
         output = output.transpose(0, 1)  # [batch_size, seq_len]
         output = output.flatten(-2, -1)
         output = self.decoder(output)
-        return torch.squeeze(torch.sigmoid(output)*2-1, dim=-1)
+        return torch.squeeze(torch.sigmoid(output) * 2 - 1, dim=-1)
