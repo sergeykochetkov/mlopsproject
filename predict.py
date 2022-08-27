@@ -2,15 +2,22 @@
 flask application prediction server
 '''
 import mlflow
+from mlflow.client import MlflowClient
 import pandas as pd
 from flask import Flask, request, jsonify
 
+MLFLOW_TRACKIG_URI = 'http://127.0.0.1:5000'
 RUN_ID = '93f7c132c0244a06ad08bbaf13f1332e'
 logged_model = f'runs:/{RUN_ID}/model'
 PORT = 9696
 HOST = 'localhost'
 SERVER = '/predict'
 URL = f'http://{HOST}:{PORT}{SERVER}'
+
+mlflow.set_tracking_uri(MLFLOW_TRACKIG_URI)
+client = MlflowClient(tracking_uri=MLFLOW_TRACKIG_URI)
+path = client.download_artifacts(run_id=RUN_ID, path='model')
+print(f'artifacts downloaded to {path}')
 
 # Load model as a PyFuncModel.
 loaded_model = mlflow.pyfunc.load_model(logged_model)
