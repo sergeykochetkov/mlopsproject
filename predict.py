@@ -1,26 +1,42 @@
 '''
 flask application prediction server
 '''
+import os
+
 import mlflow
-from mlflow.client import MlflowClient
 import pandas as pd
 from flask import Flask, request, jsonify
 
 MLFLOW_TRACKIG_URI = 'http://127.0.0.1:5000'
 RUN_ID = '93f7c132c0244a06ad08bbaf13f1332e'
-logged_model = f'runs:/{RUN_ID}/model'
+
 PORT = 9696
-HOST = 'localhost'
+HOST = '127.0.0.1'
 SERVER = '/predict'
 URL = f'http://{HOST}:{PORT}{SERVER}'
 
-mlflow.set_tracking_uri(MLFLOW_TRACKIG_URI)
-client = MlflowClient(tracking_uri=MLFLOW_TRACKIG_URI)
-path = client.download_artifacts(run_id=RUN_ID, path='model')
-print(f'artifacts downloaded to {path}')
+
+def get_model_path():
+    '''
+    if environmental variable MODEL_LOCATION is set - returns it
+    otherwise seeks model in mlflow model tracking db by RUN_ID.
+    Needed for integration_test, where we do not use mlflow model registry,
+     but load model from local path
+    '''
+
+    model_location = os.getenv('MODEL_LOCATION')
+    if model_location:
+        return model_location
+
+    logged_model = f'runs:/{RUN_ID}/model'
+    return logged_model
+
 
 # Load model as a PyFuncModel.
-loaded_model = mlflow.pyfunc.load_model(logged_model)
+model_path = get_model_path()
+print(f' load model from {model_path}')
+
+loaded_model = mlflow.pyfunc.load_model(model_path)
 
 
 def predict_on_df(data: pd.DataFrame):

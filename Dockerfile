@@ -12,8 +12,10 @@ COPY ["Makefile", "pre-commit", "requirements.txt", "./"]
 RUN make install_anaconda
 RUN make setup_cpu
 
-#COPY ["mlruns", "predict.py", "./"]
+COPY ["predict.py", "model.py", "./"]
+COPY ["integration_test/mlruns/", "./mlruns"]
+
 
 EXPOSE 9696
 
-ENTRYPOINT ["conda activate MLOpsProject && gunicorn", "--bind=localhost:9696", "predict:app"]
+CMD ["bash", "-c", "source /root/anaconda3/etc/profile.d/conda.sh && conda activate MLOpsProject && gunicorn --bind=localhost:9696 predict:app"]
