@@ -8,7 +8,7 @@ check response
 import time
 import requests
 
-from predict import URL
+from consts import URL
 from test_predict import load_test_data
 
 if __name__ == "__main__":

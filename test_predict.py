@@ -7,7 +7,8 @@ import time
 import mlflow
 import requests
 
-from predict import main, RUN_ID, URL
+from predict import main
+from consts import RUN_ID, URL
 from data import load_dataset
 
 
