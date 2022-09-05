@@ -1,0 +1,15 @@
+artifact_uri: file:///home/skochetkov/Documents/MLOpsProject/mlruns/0/93f7c132c0244a06ad08bbaf13f1332e/artifacts
+end_time: 1661589797146
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 93f7c132c0244a06ad08bbaf13f1332e
+run_uuid: 93f7c132c0244a06ad08bbaf13f1332e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1661589752937
+status: 3
+tags: []
+user_id: skochetkov
