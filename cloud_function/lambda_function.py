@@ -9,7 +9,7 @@ import io
 
 import mlflow
 import pandas as pd
-from consts import RUN_ID
+from .consts import RUN_ID
 
 
 def get_model_path():

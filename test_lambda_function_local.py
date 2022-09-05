@@ -4,12 +4,14 @@ unittests for lambda-function handler interface
 
 import unittest
 from test_predict import load_test_data
-from lambda_function import handler, predict_on_df
+from cloud_function.lambda_function import handler, predict_on_df
+
 
 class TestLocal(unittest.TestCase):
     '''
     unittests for lambda_function.handler entry point
     '''
+
     def test_inference(self):
         '''
         tests lambda-function outputs in the case of correct input

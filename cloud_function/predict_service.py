@@ -2,8 +2,8 @@
 flask application prediction server
 '''
 from flask import Flask, request, jsonify
-from consts import SERVER, HOST, PORT
-from lambda_function import predict_on_df
+from cloud_function.consts import SERVER, HOST, PORT
+from cloud_function.lambda_function import predict_on_df
 
 app = Flask('stock-prediction')
 
