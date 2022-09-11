@@ -12,14 +12,14 @@ from cloud_function.consts import RUN_ID, URL
 from data import load_dataset
 
 
-def load_test_data():
+def load_test_data(ticker='AAPL'):
     '''
     loads test stock dataset
     :return: dict with time, input features x, response y
     '''
     run = mlflow.get_run(RUN_ID)
 
-    data = load_dataset(ticker='AAPL', length=int(run.data.params['length']),
+    data = load_dataset(ticker=ticker, length=int(run.data.params['length']),
                         period=run.data.params['period'], interval=run.data.params['interval'])
     last_time, feature_x, responce_y = data[0][-1], data[1][-1], data[2][-1]
     data = {'time': str(last_time), "y": float(responce_y), "x": list(feature_x.astype(float))}

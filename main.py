@@ -100,8 +100,8 @@ def main():
     dropout = 0.5  # dropout probability
     criterion = kelly_loss  # nn.L1Loss()
     ticker = 'AAPL'
-    period = '2y'
-    interval = '1h'
+    period = '7d'
+    interval = '1m'
 
     with mlflow.start_run():
 

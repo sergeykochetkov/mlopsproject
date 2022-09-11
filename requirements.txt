@@ -6,3 +6,4 @@ prefect==2.0.3
 pylint==2.15.0
 Flask==2.2.2
 gunicorn==20.1.0
+whylogs[viz]==0.7.10
