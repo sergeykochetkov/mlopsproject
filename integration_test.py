@@ -8,7 +8,7 @@ check response
 import time
 import requests
 
-from consts import URL
+from cloud_function.consts import URL
 from test_predict import load_test_data
 
 if __name__ == "__main__":
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     time.sleep(2)
 
     print(URL)
+
     prediction = requests.post(URL, json=data, timeout=10).json()
 
     assert prediction['time'] == data['time']

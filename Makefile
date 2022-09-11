@@ -36,5 +36,5 @@ prefect_deploy_main:
 	prefect deployment run main/main
 
 run_integration_test:
-	bash -c "cd integration_test && ./run.sh"
+	bash -c "./run_integrational_test.sh"
 

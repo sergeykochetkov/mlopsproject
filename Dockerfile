@@ -16,6 +16,6 @@ COPY ["predict.py", "model.py", "./"]
 COPY ["integration_test/mlruns/", "./mlruns"]
 
 
-EXPOSE 9696
+EXPOSE 8080
 
-CMD ["bash", "-c", "source /root/anaconda3/etc/profile.d/conda.sh && conda activate MLOpsProject && gunicorn --bind=localhost:9696 predict:app"]
+CMD ["bash", "-c", "source /root/anaconda3/etc/profile.d/conda.sh && conda activate MLOpsProject && gunicorn --bind=localhost:8080 predict:app"]
