@@ -14,7 +14,7 @@ from test_predict import load_test_data
 if __name__ == "__main__":
     data = load_test_data()
 
-    time.sleep(2)
+    time.sleep(1)
 
     print(URL)
 
