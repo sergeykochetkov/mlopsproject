@@ -1,21 +1,18 @@
 '''
-sanic application prediction server
+flask application prediction server
 '''
-import os
-from sanic import Sanic, json
+from flask import Flask, request, jsonify
 from cloud_function.consts import SERVER, HOST, PORT
-
 from cloud_function.lambda_function import predict_on_df
 
-app = Sanic('stock-prediction')
+app = Flask('stock-prediction')
 
 
-@app.route(SERVER)
-async def predict_endpoint(request):
+@app.route(SERVER, methods=['POST'])
+def predict_endpoint():
     '''
     gets sent json data, calls model, returns output json back
     '''
-
     stock_data = request.get_json()
     feature_x = stock_data['x']
     pred = predict_on_df(feature_x)
@@ -25,20 +22,14 @@ async def predict_endpoint(request):
         'y': stock_data['y']
     }
 
-    return json(result)
+    return jsonify(result)
 
 
 def main():
     '''
-    start Sanic app, call this in separate process
+    start Flask app, call this in separate process
     '''
-    if 'PORT' in os.environ:
-        port = os.environ['PORT']
-        host = '0.0.0.0'
-    else:
-        port = PORT
-        host = HOST
-    app.run(host=host, port=port, motd=False, access_log=False, debug=True)
+    app.run(debug=True, host=HOST, port=PORT)
 
 
 if __name__ == "__main__":
