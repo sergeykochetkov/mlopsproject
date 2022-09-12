@@ -21,10 +21,13 @@ To deploy training pipeline run
 
     make prefect_deploy_main
 
-To run integration test
+To run integration test locally
 
-    make run_integration_test
+    make run_integration_test  OR ./run_local_integration_test.sh
 
+To run integration test on cloud
+
+    ./run_cloud_integration_test.sh
 
 
 ## What have been done:
@@ -48,13 +51,17 @@ To run integration test
 + Deploy the model in batch, web service or streaming
 
     
-    model is (almost) deployed as streaming for yandex.cloud cloud function (analog for AWS lambda).
+    model is deployed as streaming for yandex.cloud serverless container (analog for AWS lambda with container).
     Lambda function is written and tested locally (test_lambda_function_local.py).
-    yandex.cloud cloud function is created by script create_cloud_function.sh via zipping of code and model and s3
-    message queues are created and tested (analogs for aws kinesis)
+    model is containerazed in Docker serverless_container.Dockerfile
 
-
-    model is containerazed in Docker (see lambda/run_integration_test.sh)
+    to deploy model in streaming mode to yandex.cloud serverless container do:
+    1. change adress to your yandex.cloud container registry in script ./docker_push_to_yc.sh  
+    2. ./docker_push_to_yc.sh [your_tag]
+    3. create container revision in yandex.cloud with container pushed in 2.
+    4. add environmental variable to this revision MODEL_LOCATION=/app/cloud_function/mlruns/0/d8c76e5a2d3a4419a8305a361d351b36/artifacts/model
+    5. on your local machine run client server sending requests to cloud by command ./run_cloud_integration_test.sh
+    important: yandex.cloud works only with PORT=8080 defined in cloud_function/consts.py
 
 
 + Monitor the performance of your model

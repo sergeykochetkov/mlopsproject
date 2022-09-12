@@ -2,6 +2,7 @@
 
 set -x
 
+pid=$(netstat -tulpn | grep 9696 | grep -oP '([0-9]*)/python' | grep -o '[0-9]*') && kill -9 $pid && echo $pid
 
 ENV_NAME=MLOpsProject
 

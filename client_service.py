@@ -1,12 +1,12 @@
 '''
-service loading storck quotes data, sending request to
+service loading stock quotes data, sending request to
 prediction service and logging response
 '''
 
 import time
+import argparse
 import requests
-from cloud_function.consts import URL
-from test_predict import load_test_data
+from data import load_test_data
 
 
 def sign(input_number) -> int:
@@ -19,20 +19,31 @@ def sign(input_number) -> int:
     return -1
 
 
+def parse_args():
+    '''
+    :return: arguments from command line
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--yc_token', type=str,
+                        help='authorization token, for obtaining run "yc iam create-token"')
+    parser.add_argument('--yc_container_url', type=str,
+                        help='url for calling yandex.cloud serverless container')
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+
+    args = parse_args()
 
     while True:
         data = load_test_data(ticker='AAPL')
 
         time.sleep(1)
 
-        URL = 'https://bbaaeof3gfmonespgi81.containers.yandexcloud.net/predict'
         headers = {
-            "Authorization": "Bearer t1.9euelZrPk56TkJ6dkpaWmcaMjZqMkO3rnpWazs6diovHlc7J"
-                             "mpaYmo6Yio_l9PdqFwRn-e8wHSu83fT"
-                             "3KkYBZ_nvMB0rvA.mv8D6iWlbOxcP8AyIUsaLaNl_dYbQ_VrwYmWw"
-                             "nzwsfouNEoMWeY1ZwgnOSeaC2Sa370rG25gIw9GaLpoF5gRBQ"}
-        prediction = requests.post(URL, json=data, headers=headers, timeout=10).json()
+            "Authorization": f"Bearer {args.yc_token}"}
+        prediction = requests.post(args.yc_container_url,
+                                   json=data, headers=headers, timeout=10).json()
 
         print(prediction)
 
