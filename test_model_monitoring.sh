@@ -2,7 +2,7 @@
 
 
 
-pid=$(netstat -tulpn | grep 9696 | grep -oP '([0-9]*)/python' | grep -o '[0-9]*') && kill -9 $pid
+pid=$(netstat -tulpn | grep 9696 | grep -oP '([0-9]*)/python' | grep -o '[0-9]*') && kill -9 $pid && echo $pid
 
 
 WHYLABS_DEFAULT_ORG_ID=org-KMNvQ9
