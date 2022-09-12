@@ -17,15 +17,19 @@ class TestLocal(unittest.TestCase):
         tests lambda-function outputs in the case of correct input
         '''
         data = load_test_data()
-        event = {"request_id": 1,
-                 "features_x": data['x']}
+        event = {"time": 10, "request_id": 1,
+                 "features_x": data['features_x']}
         lambda_output = handler(event, None)
 
-        self.assertEqual(lambda_output['request_id'], event['request_id'])
-        self.assertEqual(lambda_output['status_code'], 0)
-        self.assertEqual(lambda_output['error_msg'], '')
+        self.assertEqual(lambda_output['request_id'], event['request_id'],
+                         msg=f'lambda output={lambda_output}')
 
-        model_output = predict_on_df(data['x'])
+        self.assertEqual(lambda_output['status_code'], 0,
+                         msg=f'lambda output={lambda_output}')
+        self.assertEqual(lambda_output['error_msg'], '',
+                         msg=f'lambda output={lambda_output}')
+
+        model_output = predict_on_df(data['features_x'])
 
         self.assertEqual(lambda_output['prediction'], model_output)
 
@@ -33,13 +37,16 @@ class TestLocal(unittest.TestCase):
         '''
         tests error code and message in case of incorrect input size
         '''
-        event = {"request_id": 2,
+        event = {"time": 10, "request_id": 2,
                  "features_x": [1, 2, 3]}
         lambda_output = handler(event, None)
 
-        self.assertEqual(lambda_output['request_id'], event['request_id'])
-        self.assertNotEqual(lambda_output['status_code'], 0)
-        self.assertNotEqual(lambda_output['error_msg'], '')
+        self.assertEqual(lambda_output['request_id'], event['request_id'],
+                         msg=f'lambda output={lambda_output}')
+        self.assertNotEqual(lambda_output['status_code'], 0,
+                            msg=f'lambda output={lambda_output}')
+        self.assertNotEqual(lambda_output['error_msg'], '',
+                            msg=f'lambda output={lambda_output}')
 
 
 if __name__ == "__main__":

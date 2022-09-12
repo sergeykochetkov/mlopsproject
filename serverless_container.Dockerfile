@@ -9,5 +9,6 @@ RUN pip install -r cloud_function/requirements.txt
 
 ENV PYTHONPATH=/app:/app/cloud_function
 
-CMD [ "python", "cloud_function/predict_service.py" ]
+
+CMD [ "python", "-u", "cloud_function/predict_service.py" ]
 #CMD ["gunicorn", "--bind=localhost:9696", "cloud_function.predict_service:app"]

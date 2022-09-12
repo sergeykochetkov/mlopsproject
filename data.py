@@ -2,9 +2,12 @@
 load stock data and create dataset
 '''
 import random
+import datetime
+import mlflow
 import numpy as np
 from torch.utils.data.dataset import Dataset
 import yfinance as yf
+from cloud_function.consts import RUN_ID
 
 
 class StockDataset(Dataset):
@@ -52,3 +55,19 @@ def load_dataset(ticker: str, length: int, interval: str,
 
     return np.array(all_dates), np.array(features_x, dtype=np.float32), \
            np.array(targets_y, dtype=np.float32)
+
+
+def load_test_data(ticker='AAPL'):
+    '''
+    loads test stock dataset
+    :return: dict with time, input features x, response y
+    '''
+    run = mlflow.get_run(RUN_ID)
+
+    data = load_dataset(ticker=ticker, length=int(run.data.params['length']),
+                        period=run.data.params['period'], interval=run.data.params['interval'])
+    last_time, feature_x, responce_y = data[0][-1], data[1][-1], data[2][-1]
+    data = {'time': str(last_time), "y": float(responce_y),
+            "features_x": list(feature_x.astype(float)),
+            'request_id': datetime.datetime.now().timestamp()}
+    return data

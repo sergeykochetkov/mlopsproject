@@ -14,7 +14,7 @@ container_id=$(docker run -p 9696:9696 --env MODEL_LOCATION=/app/cloud_function/
 
 echo "run container ${container_id}"
 
-sleep 2
+sleep 5
 
 CA="source /home/$USER/anaconda3/etc/profile.d/conda.sh && activate ${ENV_NAME}"
 

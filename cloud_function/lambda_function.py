@@ -45,6 +45,13 @@ def predict_on_df(data: pd.DataFrame) -> float:
     return output
 
 
+def _get_error_call_stack():
+    with io.StringIO() as output:
+        traceback.print_exc(file=output)
+        error_msg = output.getvalue()
+    return error_msg
+
+
 def handler(event, context):
     '''
     lambda function handler for serverless function
@@ -57,28 +64,30 @@ def handler(event, context):
     print(event)
 
     request_id = -1
+    time = -1
     try:
+        time = event['time']
         request_id = event['request_id']
         features_x = event['features_x']
 
         prediction = predict_on_df(features_x)
         status_code = 0
         error_msg = ''
-    except KeyError as exception:
+    except KeyError:
         status_code = -2
         prediction = -1
-        error_msg = str(exception)
+        error_msg = _get_error_call_stack()
     except RuntimeError:
-        with io.StringIO() as output:
-            traceback.print_exc(file=output)
-            error_msg = output.getvalue()
+
         status_code = -3
         prediction = -1
-    except Exception as exception:  # pylint: disable=broad-except
+        error_msg = _get_error_call_stack()
+    except Exception:  # pylint: disable=broad-except
         status_code = -1
         prediction = -1
-        error_msg = str(exception)
+        error_msg = _get_error_call_stack()
     return {
+        'time': time,
         'request_id': request_id,
         'status_code': status_code,
         'prediction': prediction,
