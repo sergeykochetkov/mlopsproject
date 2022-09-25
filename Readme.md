@@ -1,4 +1,4 @@
-# Project forecasts profitable trading position on stock market with help of pytorch and transformers.
+# Project forecasts profitable trading position on stock market with help of pytorch and transformers. Graduation Project for MLOps course https://github.com/DataTalksClub/mlops-zoomcamp
 
 ## We use stock ticker, history length, time intervals and other parameters specified in main.py. 
 
